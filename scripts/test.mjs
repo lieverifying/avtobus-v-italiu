@@ -5,6 +5,7 @@ import { createServer } from 'node:http';
 import { resolve, extname } from 'node:path';
 import { chromium } from 'playwright';
 import { testImprovements } from './test-improvements.mjs';
+import { testRoutes } from './test-routes.mjs';
 
 const root = resolve('dist');
 const types = {'.html':'text/html; charset=utf-8','.js':'text/javascript','.webp':'image/webp','.png':'image/png','.woff2':'font/woff2','.xml':'application/xml','.txt':'text/plain'};
@@ -190,7 +191,9 @@ try {
   assert.equal(new Date(saved.departureDate+'T12:00:00Z').getUTCDay(),3);
   assert.equal(new Date(saved.date+'T12:00:00Z').getUTCDay(),2);
   assert(saved.message.includes(saved.departureDate.split('-').reverse().join('.')));
-  assert(saved.message.includes('Точну точку повідомить менеджер'));
+  assert(saved.message.includes('Посадка: Львів — Центральний автовокзал'));
+  assert(saved.message.includes('Висадка: Trieste — Piazza della Libertà, Via Flavio Gioia 2'));
+  assert.equal(saved.boardingAddress,'Центральний автовокзал');
   assert.equal(applications,3);
   assert(await page.getByRole('dialog').innerText().then(s=>s.includes('TEST-001')));
   await page.keyboard.press('Escape');
@@ -200,6 +203,7 @@ try {
   pass('phone validation, seat conflict, retry, price, confirmation and Escape (mock API only)');
   await testP0(browser,base,pass);
   await testImprovements(browser,base,pass);
+  await testRoutes(browser,base,pass);
   console.log(`${checks} scenario groups passed. No real applications submitted.`);
 } finally {
   await browser.close();
@@ -297,7 +301,7 @@ async function testP0(browser,base,pass) {
   assert.equal(lastPayload.seats,'');
   assert.equal(lastPayload.seatPreference,'any');
   assert.equal(lastPayload.phone,'+380671234567');
-  assert((await page.getByRole('dialog').innerText()).includes('Точну точку повідомить менеджер'));
+  assert((await page.getByRole('dialog').innerText()).includes('Львів — Центральний автовокзал'));
   await context.close();
   pass('optional seats, no default sheet dependency, active-tab 60s polling, 10s timeout and booking despite failed seats');
 }

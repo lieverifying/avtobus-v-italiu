@@ -228,7 +228,7 @@
           </div>
           <details class="trip-details">
             <summary>{{ t.ui.tripDetails }} <span class="faq-plus" aria-hidden="true">+</span></summary>
-            <dl class="route-addresses"><dt>{{ t.ui.boarding }}</dt><dd>{{ fromAddress }}</dd><dt>{{ t.ui.dropoff }}</dt><dd>{{ toAddress }}</dd></dl>
+            <dl class="route-addresses"><dt>{{ t.ui.boarding }}</dt><dd>{{ fromAddress }}<sc-if value="{{ fromMap }}" hint-placeholder-val="{{ false }}"><a href="{{ fromMap }}" target="_blank" rel="noopener">{{ t.ui.mapLink }}</a></sc-if></dd><dt>{{ t.ui.dropoff }}</dt><dd>{{ toAddress }}<sc-if value="{{ toMap }}" hint-placeholder-val="{{ false }}"><a href="{{ toMap }}" target="_blank" rel="noopener">{{ t.ui.mapLink }}</a></sc-if></dd></dl>
             <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:12px">
               <sc-for list="{{ l.tags }}" as="g" hint-placeholder-count="4">
                 <span style="padding:7px 12px;background:rgba(255,255,255,0.06);border-radius:8px;font-size:12.5px;font-weight:600;color:#B9CBE1">{{ g }}</span>
@@ -418,7 +418,7 @@
                 </sc-if>
               </div>
             </div>
-            <dl class="route-addresses"><dt>{{ t.ui.boarding }}</dt><dd>{{ fromAddress }}</dd><dt>{{ t.ui.dropoff }}</dt><dd>{{ toAddress }}</dd></dl>
+            <dl class="route-addresses"><dt>{{ t.ui.boarding }}</dt><dd>{{ fromAddress }}<sc-if value="{{ fromMap }}" hint-placeholder-val="{{ false }}"><a href="{{ fromMap }}" target="_blank" rel="noopener">{{ t.ui.mapLink }}</a></sc-if></dd><dt>{{ t.ui.dropoff }}</dt><dd>{{ toAddress }}<sc-if value="{{ toMap }}" hint-placeholder-val="{{ false }}"><a href="{{ toMap }}" target="_blank" rel="noopener">{{ t.ui.mapLink }}</a></sc-if></dd></dl>
             <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(50%,110px),1fr));gap:14px;margin-top:20px">
               <div>
                 <div style="{{ ticketLbl }}">{{ t.f.dateOut }}</div>
@@ -577,7 +577,7 @@
           <div style="font-size:14px;font-weight:600;line-height:1.5;color:#B9CBE1;margin-top:10px">{{ t.sendOkNote }}</div>
         </div>
         <div style="padding:20px 24px 24px;display:flex;flex-direction:column;gap:16px">
-          <div><strong>{{ pass.from }} → {{ pass.to }}</strong><p>{{ pass.dateOut }} · {{ pass.depTime }}</p><dl class="route-addresses"><dt>{{ t.ui.boarding }}</dt><dd>{{ fromAddress }}</dd><dt>{{ t.ui.dropoff }}</dt><dd>{{ toAddress }}</dd></dl></div>
+          <div><strong>{{ pass.from }} → {{ pass.to }}</strong><p>{{ pass.dateOut }} · {{ pass.depTime }}</p><dl class="route-addresses"><dt>{{ t.ui.boarding }}</dt><dd>{{ fromAddress }}<sc-if value="{{ fromMap }}" hint-placeholder-val="{{ false }}"><a href="{{ fromMap }}" target="_blank" rel="noopener">{{ t.ui.mapLink }}</a></sc-if></dd><dt>{{ t.ui.dropoff }}</dt><dd>{{ toAddress }}<sc-if value="{{ toMap }}" hint-placeholder-val="{{ false }}"><a href="{{ toMap }}" target="_blank" rel="noopener">{{ t.ui.mapLink }}</a></sc-if></dd></dl></div>
           <div style="font-size:13px;font-weight:800;letter-spacing:0.02em;text-transform:none;color:#41597A">{{ t.modal.contacts }}</div>
           <div style="display:flex;flex-direction:column;gap:9px">
             <div style="display:flex;align-items:center;gap:8px;font-size:12.5px;font-weight:700;color:#41597A">

@@ -22,7 +22,7 @@ export const P0_COPY = {
     weekly_tue:'Виїзд щовівторка', weekly_wed:'Виїзд щосереди', weekly_fri:'Виїзд щоп’ятниці', weekly_sat:'Виїзд щосуботи',
     tripDetails:'Деталі рейсу та точки посадки', toPassengers:'До даних пасажирів', seatPickerTitle:'Вибір місця — необов’язково',
     dateNote:'Дата виїзду саме з вашого міста. Час і точку посадки підтвердить менеджер.',
-    boarding:'Посадка', dropoff:'Висадка', addressPending:'Точну точку повідомить менеджер',
+    boarding:'Посадка', dropoff:'Висадка', addressPending:'Точну точку повідомить менеджер', mapLink:'точка на Google Maps',
     payment:'Оплата готівкою водієві при посадці, після підтвердження менеджером.',
     bookingFaq:'Оберіть міста та дату, за бажанням — місце на схемі. Заповніть дані пасажирів і надішліть заявку або напишіть у WhatsApp чи Viber. Якщо схема місць не завантажилася, заявку все одно можна надіслати. Менеджер підтвердить місце.',
     seatSub:'Оберіть місце за бажанням або довірте вибір менеджеру.'
@@ -50,7 +50,7 @@ export const P0_COPY = {
     weekly_tue:'Выезд каждый вторник', weekly_wed:'Выезд каждую среду', weekly_fri:'Выезд каждую пятницу', weekly_sat:'Выезд каждую субботу',
     tripDetails:'Детали рейса и точки посадки', toPassengers:'К данным пассажиров', seatPickerTitle:'Выбор места — необязательно',
     dateNote:'Дата выезда именно из вашего города. Время и точку посадки подтвердит менеджер.',
-    boarding:'Посадка', dropoff:'Высадка', addressPending:'Точную точку сообщит менеджер',
+    boarding:'Посадка', dropoff:'Высадка', addressPending:'Точную точку сообщит менеджер', mapLink:'точка на Google Maps',
     payment:'Оплата наличными водителю при посадке, после подтверждения менеджером.',
     bookingFaq:'Выберите города и дату, по желанию — место на схеме. Заполните данные пассажиров и отправьте заявку или напишите в WhatsApp либо Viber. Если схема мест не загрузилась, заявку всё равно можно отправить. Менеджер подтвердит место.',
     seatSub:'Выберите место по желанию или доверьте выбор менеджеру.'
@@ -78,7 +78,7 @@ export const P0_COPY = {
     weekly_tue:'Partenza ogni martedì', weekly_wed:'Partenza ogni mercoledì', weekly_fri:'Partenza ogni venerdì', weekly_sat:'Partenza ogni sabato',
     tripDetails:'Dettagli della corsa e punti di salita', toPassengers:'Vai ai dati dei passeggeri', seatPickerTitle:'Scelta del posto — facoltativa',
     dateNote:'Data di partenza dalla tua città. L’operatore confermerà ora e punto di salita.',
-    boarding:'Salita', dropoff:'Discesa', addressPending:'Il punto esatto sarà comunicato dall’operatore',
+    boarding:'Salita', dropoff:'Discesa', addressPending:'Il punto esatto sarà comunicato dall’operatore', mapLink:'punto su Google Maps',
     payment:'Pagamento in contanti all’autista alla salita, dopo la conferma dell’operatore.',
     bookingFaq:'Scegli città e data e, se vuoi, un posto sulla mappa. Inserisci i dati dei passeggeri e invia la richiesta oppure scrivi su WhatsApp o Viber. Puoi inviare la richiesta anche se la mappa non si carica. L’operatore confermerà il posto.',
     seatSub:'Scegli un posto se vuoi, oppure lascia la scelta all’operatore.'

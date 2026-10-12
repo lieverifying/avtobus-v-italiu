@@ -11,32 +11,61 @@ const DAYS = {
   sun: { ua: 'нд', ru: 'вс', it: 'dom', i: 7 }
 };
 
+// Boarding points: `points` lists one or more addresses (string, or {ua,ru,it});
+// `map` is a Google Maps link for a stop without a written address.
+// A city with neither shows the "manager will tell you" text.
+const BUS_STATION = { ua: 'автостанція', ru: 'автостанция', it: 'autostazione' };
+
 const UA_CITIES = [
-  { k: 'kryvyi', ua: 'Кривий Ріг', ru: 'Кривой Рог', it: 'Kryvyi Rih', base: 150, pesaro: 160, ancona: 170, pescara: 170, dep: ['tue', '12:00'], arr: ['sun', '14:00'] },
-  { k: 'kropyv', ua: 'Кропивницький', ru: 'Кропивницкий', it: 'Kropyvnytskyi', base: 150, pesaro: 160, ancona: 170, pescara: 170, dep: ['tue', '14:00'], arr: ['sun', '12:00'] },
-  { k: 'cherkasy', ua: 'Черкаси', ru: 'Черкассы', it: 'Cherkasy', base: 150, pesaro: 160, ancona: 160, pescara: 160, dep: ['tue', '16:00'], arr: ['sun', '10:00'] },
-  { k: 'kyiv', ua: 'Київ', ru: 'Киев', it: 'Kyiv', base: 140, pesaro: 150, ancona: 150, pescara: 150, dep: ['tue', '19:30'], arr: ['sun', '06:30'] },
-  { k: 'zhytomyr', ua: 'Житомир', ru: 'Житомир', it: 'Zhytomyr', base: 140, pesaro: 150, ancona: 150, pescara: 150, dep: ['tue', '22:30'], arr: ['sun', '04:30'] },
-  { k: 'rivne', ua: 'Рівне', ru: 'Ровно', it: 'Rivne', base: 130, pesaro: 140, ancona: 140, pescara: 140, dep: ['wed', '01:00'], arr: ['sun', '02:00'] },
-  { k: 'lviv', ua: 'Львів', ru: 'Львов', it: 'Lviv', base: 120, pesaro: 120, ancona: 120, pescara: 120, dep: ['wed', '03:30'], arr: ['sat', '23:00'] },
+  { k: 'kryvyi', ua: 'Кривий Ріг', ru: 'Кривой Рог', it: 'Kryvyi Rih', base: 150, pesaro: 160, ancona: 170, pescara: 170, dep: ['tue', '12:00'], arr: ['sun', '14:00'],
+    points: [{ ua: '95 квартал', ru: '95 квартал', it: '95 Kvartal' }] },
+  { k: 'kropyv', ua: 'Кропивницький', ru: 'Кропивницкий', it: 'Kropyvnytskyi', base: 150, pesaro: 160, ancona: 170, pescara: 170, dep: ['tue', '14:00'], arr: ['sun', '12:00'],
+    points: [BUS_STATION] },
+  { k: 'cherkasy', ua: 'Черкаси', ru: 'Черкассы', it: 'Cherkasy', base: 150, pesaro: 160, ancona: 160, pescara: 160, dep: ['tue', '16:00'], arr: ['sun', '10:00'],
+    points: [{ ua: 'автостанція 2', ru: 'автостанция 2', it: 'autostazione 2' }] },
+  { k: 'kyiv', ua: 'Київ', ru: 'Киев', it: 'Kyiv', base: 140, pesaro: 150, ancona: 150, pescara: 150, dep: ['tue', '19:30'], arr: ['sun', '06:30'],
+    points: [
+      { ua: 'вул. Симона Петлюри, 32', ru: 'ул. Симона Петлюры, 32', it: 'vul. Symona Petliury 32' },
+      { ua: 'Центральний залізничний вокзал', ru: 'Центральный железнодорожный вокзал', it: 'stazione ferroviaria centrale' }
+    ] },
+  { k: 'zhytomyr', ua: 'Житомир', ru: 'Житомир', it: 'Zhytomyr', base: 140, pesaro: 150, ancona: 150, pescara: 150, dep: ['tue', '22:30'], arr: ['sun', '04:30'],
+    points: [BUS_STATION] },
+  { k: 'rivne', ua: 'Рівне', ru: 'Ровно', it: 'Rivne', base: 130, pesaro: 140, ancona: 140, pescara: 140, dep: ['wed', '01:00'], arr: ['sun', '02:00'],
+    points: [BUS_STATION] },
+  { k: 'lviv', ua: 'Львів', ru: 'Львов', it: 'Lviv', base: 120, pesaro: 120, ancona: 120, pescara: 120, dep: ['wed', '03:30'], arr: ['sat', '23:00'],
+    points: [{ ua: 'Центральний автовокзал', ru: 'Центральный автовокзал', it: 'autostazione centrale' }] },
   { k: 'stryi', ua: 'Стрий', ru: 'Стрый', it: 'Stryi', base: 120, pesaro: 120, ancona: 120, pescara: 120, dep: ['wed', '05:00'], arr: ['sat', '22:00'] },
   { k: 'uzhhorod', ua: 'Ужгород', ru: 'Ужгород', it: 'Uzhhorod', base: 120, pesaro: 120, ancona: 120, pescara: 120, dep: ['wed', '07:30'], arr: ['sat', '19:00'] }
 ];
 
+// `tier` is the pricing reference: the UA city's price column used for this stop.
+// Fano, Morotta, Senigallia and Civitanova reuse the Ancona column (`tier: 'ancona'`)
+// while keeping their own name everywhere.
+// `arr` / `dep` = [weekday, 'HH:MM'] for the Ukraine→Italy arrival and the
+// Italy→Ukraine departure. `null` means not confirmed yet: the city can be
+// booked as a destination, and is offered as a departure city once `dep` is set.
 const IT_CITIES = [
-  { k: 'trieste', name: 'Trieste', tier: 'base', arr: ['wed', '22:30'], dep: ['sat', '04:00'] },
-  { k: 'venezia', name: 'Venezia', tier: 'base', arr: ['thu', '00:50'], dep: ['sat', '01:40'] },
-  { k: 'padova', name: 'Padova', tier: 'base', arr: ['thu', '01:30'], dep: ['sat', '01:00'] },
-  { k: 'rovigo', name: 'Rovigo', tier: 'base', arr: ['thu', '02:30'], dep: ['sat', '00:10'] },
-  { k: 'ferrara', name: 'Ferrara', tier: 'base', arr: ['thu', '03:20'], dep: ['fri', '23:00'] },
-  { k: 'bologna', name: 'Bologna', tier: 'base', arr: ['thu', '04:20'], dep: ['fri', '22:00'] },
-  { k: 'imola', name: 'Imola', tier: 'base', arr: ['thu', '05:20'], dep: ['fri', '21:10'] },
-  { k: 'forli', name: 'Forlì', tier: 'base', arr: ['thu', '06:00'], dep: ['fri', '20:20'] },
-  { k: 'rimini', name: 'Rimini', tier: 'base', arr: ['thu', '07:00'], dep: ['fri', '19:20'] },
-  { k: 'pesaro', name: 'Pesaro', tier: 'pesaro', arr: ['thu', '07:30'], dep: ['fri', '18:40'] },
-  { k: 'ancona', name: 'Ancona', tier: 'ancona', arr: ['thu', '09:00'], dep: ['fri', '17:30'] },
-  { k: 'pescara', name: 'Pescara', tier: 'pescara', arr: ['thu', '11:00'], dep: ['fri', '15:00'] }
+  { k: 'trieste', name: 'Trieste', tier: 'base', arr: ['wed', '22:30'], dep: ['sat', '04:00'], points: ['Piazza della Libertà, Via Flavio Gioia 2'] },
+  { k: 'venezia', name: 'Venezia', tier: 'base', arr: ['thu', '00:50'], dep: ['sat', '01:40'], points: ['Viale Stazione 3'] },
+  { k: 'padova', name: 'Padova', tier: 'base', arr: ['thu', '01:30'], dep: ['sat', '01:00'], points: ['Viale della Pace, autostazione, corsia 12'] },
+  { k: 'rovigo', name: 'Rovigo', tier: 'base', arr: ['thu', '02:30'], dep: ['sat', '00:10'], points: ['Piazza Riconoscenza 5'] },
+  { k: 'ferrara', name: 'Ferrara', tier: 'base', arr: ['thu', '03:20'], dep: ['fri', '23:00'], points: ['Piazza Stazione'] },
+  { k: 'bologna', name: 'Bologna', tier: 'base', arr: ['thu', '04:20'], dep: ['fri', '22:00'], points: ['Piazza XX Settembre 6'] },
+  { k: 'imola', name: 'Imola', tier: 'base', arr: ['thu', '05:20'], dep: ['fri', '21:10'], points: ['Via Romagnoli'] },
+  { k: 'forli', name: 'Forlì', tier: 'base', arr: ['thu', '06:00'], dep: ['fri', '20:20'], points: ['Via Alessandro Volta, autostazione'] },
+  { k: 'rimini', name: 'Rimini', tier: 'base', arr: ['thu', '07:00'], dep: ['fri', '19:20'], points: ['Piazzale Cesare Battisti 22'] },
+  { k: 'pesaro', name: 'Pesaro', tier: 'pesaro', arr: ['thu', '07:30'], dep: ['fri', '18:40'], points: ['Piazza Marcello Stefanini, Palasport'] },
+  { k: 'fano', name: 'Fano', tier: 'ancona', arr: null, dep: null, map: 'https://maps.app.goo.gl/a7NMvSwVXZ5C8ao8A' },
+  { k: 'morotta', name: 'Morotta', tier: 'ancona', arr: null, dep: null },
+  { k: 'senigallia', name: 'Senigallia', tier: 'ancona', arr: null, dep: null, map: 'https://maps.app.goo.gl/BvrwVkH8WimkSbmXA' },
+  { k: 'ancona', name: 'Ancona', tier: 'ancona', arr: ['thu', '09:00'], dep: ['fri', '17:30'], points: ['Piazza Rosselli, stazione F.S.'] },
+  { k: 'civitanova', name: 'Civitanova', tier: 'ancona', arr: null, dep: null, map: 'https://maps.app.goo.gl/v1aETRoXKfp2Awd76' },
+  { k: 'pescara', name: 'Pescara', tier: 'pescara', arr: ['thu', '11:00'], dep: ['fri', '15:00'], points: ['Piazzale Terminal Bus, fronte stazione FS'] }
 ];
+
+// Departure cities: every UA city; an Italian city only once its departure is confirmed.
+const boardingCities = dir => dir === 'ua_it' ? UA_CITIES : IT_CITIES.filter(c => c.dep);
+const arrivalCities = dir => dir === 'ua_it' ? IT_CITIES : UA_CITIES;
 
 const SEAT_ROWS = [
   [1, 2, 3, 4], [5, 6, 7, 8], [9, 10, 11, 12], [13, 14, 15, 16], [17, 18, 19, 20],
@@ -51,7 +80,7 @@ const T = {
       kicker: 'Україна ⇄ Італія',
       t1: 'Автобус в Італію', t2: 'без пересадок',
       sub: 'Забронюйте поїздку з України до Італії за кілька кліків.',
-      chips: ['Виїзд щовівторка', 'Без пересадок', '21 місто на маршруті']
+      chips: ['Виїзд щовівторка', 'Без пересадок', '25 міст на маршруті']
     },
     res: { sub: 'ціна за напрямком, у євро', pick: 'Обрати місце',
       empty: 'Оберіть напрямок, міста та дату виїзду', emptySub: 'Після цього тут з’являться рейс, час у дорозі та ціна.', emptyCta: 'До пошуку' },
@@ -123,7 +152,7 @@ const T = {
       kicker: 'Украина ⇄ Италия',
       t1: 'Автобус в Италию', t2: 'без пересадок',
       sub: 'Забронируйте поездку из Украины в Италию за пару кликов.',
-      chips: ['Выезд каждый вторник', 'Без пересадок', '21 город на маршруте']
+      chips: ['Выезд каждый вторник', 'Без пересадок', '25 городов на маршруте']
     },
     res: { sub: 'цена по направлению, в евро', pick: 'Выбрать место',
       empty: 'Выберите направление, города и дату выезда', emptySub: 'После этого здесь появятся рейс, время в пути и цена.', emptyCta: 'К поиску' },
@@ -195,7 +224,7 @@ const T = {
       kicker: 'Ucraina ⇄ Italia',
       t1: 'Autobus per l’Italia', t2: 'senza cambi',
       sub: 'Prenota il viaggio dall’Ucraina all’Italia in pochi clic.',
-      chips: ['Partenza ogni martedì', 'Senza cambi', '21 città sul percorso']
+      chips: ['Partenza ogni martedì', 'Senza cambi', '25 città sul percorso']
     },
     res: { sub: 'prezzo per tratta, in euro', pick: 'Scegli il posto',
       empty: 'Scegli direzione, città e data di partenza', emptySub: 'Poi qui compariranno corsa, durata e prezzo.', emptyCta: 'Vai alla ricerca' },
@@ -609,8 +638,8 @@ export class Component extends React.Component {
       const string = (v, max = 200) => typeof v === 'string' ? v.slice(0, max) : '';
       const person = p => ({first:string(p?.first), last:string(p?.last), phone:this.cleanPhone(string(p?.phone, 50))});
       const dir = d.dir === 'it_ua' ? 'it_ua' : 'ua_it';
-      const fromCities = dir === 'ua_it' ? UA_CITIES : IT_CITIES;
-      const toCities = dir === 'ua_it' ? IT_CITIES : UA_CITIES;
+      const fromCities = boardingCities(dir);
+      const toCities = arrivalCities(dir);
       const pax = Math.min(6, Math.max(1, parseInt(d.pax, 10) || 1));
       const touched = Object.fromEntries(Object.entries(d.touched || {}).filter(([k,v]) => v === true && /^(passenger-[1-6]-(first|last|phone)|booking-email|booking-consent)$/.test(k)));
       const seatMode = d.seatMode === 'manual' ? 'manual' : 'any';
@@ -631,7 +660,7 @@ export class Component extends React.Component {
 
   trustSchedule() {
     const s = this.state, ui = this.t().ui;
-    const city = (s.dir === 'ua_it' ? UA_CITIES : IT_CITIES).find(c => c.k === s.from);
+    const city = boardingCities(s.dir).find(c => c.k === s.from);
     return city ? ui['weekly_' + city.dep[0]] : ui[s.dir === 'ua_it' ? 'weeklyUa' : 'weeklyIt'];
   }
 
@@ -640,6 +669,19 @@ export class Component extends React.Component {
   accent() { return this.props.accent || '#F2B01E'; }
 
   cityName(c) { return c.name || c[this.lang()]; }
+
+  cityPoints(c) {
+    const lang = this.lang();
+    return ((c && c.points) || []).map(p => typeof p === 'string' ? p : p[lang]);
+  }
+
+  /** Boarding/drop-off point as plain text: address(es), map link, or "manager will tell". */
+  pointText(c) {
+    if (!c) return this.t().ui.addressPending;
+    const points = this.cityPoints(c);
+    if (points.length) return points.join(' / ');
+    return c.map || this.t().ui.addressPending;
+  }
 
   hhmm(pair) { return pair ? pair[1] : '—'; }
   dayAbbr(pair) { return pair ? DAYS[pair[0]][this.lang()] : ''; }
@@ -729,7 +771,7 @@ export class Component extends React.Component {
   }
 
   boardingOffset(dir = this.state.dir, from = this.state.from) {
-    const city = (dir === 'ua_it' ? UA_CITIES : IT_CITIES).find(c => c.k === from);
+    const city = boardingCities(dir).find(c => c.k === from);
     return city ? (DAYS[city.dep[0]].i - (dir === 'ua_it' ? 2 : 5) + 7) % 7 : 0;
   }
 
@@ -869,13 +911,16 @@ export class Component extends React.Component {
 
   routeNames() {
     const s = this.state;
-    const src = s.dir === 'ua_it' ? UA_CITIES : IT_CITIES;
-    const dst = s.dir === 'ua_it' ? IT_CITIES : UA_CITIES;
+    const src = boardingCities(s.dir);
+    const dst = arrivalCities(s.dir);
     const f = src.find(c => c.k === s.from);
     const t = dst.find(c => c.k === s.to);
     return {
       f: f ? this.cityName(f) : '—',
       t: t ? this.cityName(t) : '—',
+      fp: this.pointText(f), tp: this.pointText(t),
+      fm: (f && !this.cityPoints(f).length && f.map) || '',
+      tm: (t && !this.cityPoints(t).length && t.map) || '',
       fo: f || src[0], to: t || dst[0]
     };
   }
@@ -898,8 +943,8 @@ export class Component extends React.Component {
       lines.push('   ' + t.f.seat + ': ' + seat);
     });
     lines.push('');
-    lines.push(t.ui.boarding + ': ' + r.f + ' — ' + t.ui.addressPending);
-    lines.push(t.ui.dropoff + ': ' + r.t + ' — ' + t.ui.addressPending);
+    lines.push(t.ui.boarding + ': ' + r.f + ' — ' + r.fp);
+    lines.push(t.ui.dropoff + ': ' + r.t + ' — ' + r.tp);
     if (s.email.trim()) lines.push(t.f.email + ': ' + s.email.trim());
     if (s.comment.trim()) lines.push(t.f.comment + ': ' + s.comment.trim());
     lines.push(t.f.bag + ': 30 kg + 5 kg' + (s.extraKg ? ' · +' + s.extraKg + ' kg = ' + this.kgCost() + ' €' : ''));
@@ -932,8 +977,8 @@ export class Component extends React.Component {
       seats: s.seats.join(', '),
       seatPreference: s.seats.length ? 'selected' : 'any',
       seatRequestLabel: s.seats.length ? s.seats.join(', ') : this.t().ui.anySeat,
-      boardingAddress: this.t().ui.addressPending,
-      dropoffAddress: this.t().ui.addressPending,
+      boardingAddress: r.fp,
+      dropoffAddress: r.tp,
       paxCount: this.paxCount(),
       comment: s.comment.trim(),
       extraKg: s.extraKg,
@@ -1156,8 +1201,8 @@ export class Component extends React.Component {
       setDirB: () => this.setState({ dir: 'it_ua', from: '', to: '', dateOut: '', seats: [], seatMode:'any' }, () => this.loadSeats()),
 
       form: s,
-      fromOptions: [{ k: '', name: t.f.choose }].concat((uaIt ? UA_CITIES : IT_CITIES).map(c => ({ k: c.k, name: this.cityName(c) }))),
-      toOptions: [{ k: '', name: t.f.choose }].concat((uaIt ? IT_CITIES : UA_CITIES).map(c => ({ k: c.k, name: this.cityName(c) }))),
+      fromOptions: [{ k: '', name: t.f.choose }].concat(boardingCities(s.dir).map(c => ({ k: c.k, name: this.cityName(c) }))),
+      toOptions: [{ k: '', name: t.f.choose }].concat(arrivalCities(s.dir).map(c => ({ k: c.k, name: this.cityName(c) }))),
       dateOutOptions: [{ k: '', name: t.f.chooseDate }].concat(dateOutOpts),
       paxOptions: ['1', '2', '3', '4', '5', '6'],
       bagRules: t.bagRules,
@@ -1287,7 +1332,8 @@ export class Component extends React.Component {
       waChatHref: this.waChatUrl(),
       applicationWhatsApp: 'https://wa.me/' + (s.lang === 'it' ? '393245958718' : WA_NUM) + '?text=' + encodeURIComponent(this.message()),
       copyApplication: () => { this.copy(this.message()); this.flash(t.ui.copied); },
-      fromAddress: r.f + ' — ' + t.ui.addressPending, toAddress: r.t + ' — ' + t.ui.addressPending,
+      fromAddress: r.f + ' — ' + (r.fm ? '' : r.fp), toAddress: r.t + ' — ' + (r.tm ? '' : r.tp),
+      fromMap: r.fm, toMap: r.tm,
       modalOpen: s.modalOpen && !!s.sentId,
       closeModal: () => this.setState({ modalOpen: false }),
       stopClick: e => e.stopPropagation(),

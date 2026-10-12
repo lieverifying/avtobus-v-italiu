@@ -141,7 +141,7 @@ export async function testImprovements(browser, base, pass) {
     if (width===390) assert(metrics.formY<1500,JSON.stringify(metrics));
     assert.equal(metrics.columns,width===1280?3:width===768?2:1);
     await page.locator('.trip-details > summary').click();
-    assert((await page.locator('.trip-details').innerText()).includes('Точну точку повідомить менеджер'));
+    assert((await page.locator('.trip-details').innerText()).includes('Львів — Центральний автовокзал'));
     await page.locator('.trip-details > summary').click();
     await page.locator('.seat-picker > summary').click();await page.getByRole('button',{name:'Обрати місце на схемі',exact:true}).click();
     await page.locator('[data-v=seat]').first().waitFor();

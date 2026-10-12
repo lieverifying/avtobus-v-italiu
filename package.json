@@ -6,7 +6,8 @@
     "build": "node scripts/build.mjs",
     "build:pages": "node scripts/build-pages.mjs",
     "test": "node scripts/test.mjs",
-    "serve": "python3 -m http.server 8080 --directory dist"
+    "serve": "python3 -m http.server 8080 --directory dist",
+    "test:apps-script": "node scripts/test-apps-script.mjs"
   },
   "dependencies": {
     "@fontsource/manrope": "5.3.0",
