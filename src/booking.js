@@ -39,7 +39,7 @@ const UA_CITIES = [
 ];
 
 // `tier` is the pricing reference: the UA city's price column used for this stop.
-// Fano, Morotta, Senigallia and Civitanova reuse the Ancona column (`tier: 'ancona'`)
+// Fano, Marotta, Senigallia and Civitanova reuse the Ancona column (`tier: 'ancona'`)
 // while keeping their own name everywhere.
 // `arr` / `dep` = [weekday, 'HH:MM'] for the Ukraine→Italy arrival and the
 // Italy→Ukraine departure. `null` means not confirmed yet: the city can be
@@ -56,7 +56,7 @@ const IT_CITIES = [
   { k: 'rimini', name: 'Rimini', tier: 'base', arr: ['thu', '07:00'], dep: ['fri', '19:20'], points: ['Piazzale Cesare Battisti 22'] },
   { k: 'pesaro', name: 'Pesaro', tier: 'pesaro', arr: ['thu', '07:30'], dep: ['fri', '18:40'], points: ['Piazza Marcello Stefanini, Palasport'] },
   { k: 'fano', name: 'Fano', tier: 'ancona', arr: null, dep: null, map: 'https://maps.app.goo.gl/a7NMvSwVXZ5C8ao8A' },
-  { k: 'morotta', name: 'Morotta', tier: 'ancona', arr: null, dep: null },
+  { k: 'marotta', name: 'Marotta', tier: 'ancona', arr: null, dep: null },
   { k: 'senigallia', name: 'Senigallia', tier: 'ancona', arr: null, dep: null, map: 'https://maps.app.goo.gl/BvrwVkH8WimkSbmXA' },
   { k: 'ancona', name: 'Ancona', tier: 'ancona', arr: ['thu', '09:00'], dep: ['fri', '17:30'], points: ['Piazza Rosselli, stazione F.S.'] },
   { k: 'civitanova', name: 'Civitanova', tier: 'ancona', arr: null, dep: null, map: 'https://maps.app.goo.gl/v1aETRoXKfp2Awd76' },

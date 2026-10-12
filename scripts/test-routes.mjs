@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 
-// Fares as they were before Fano/Morotta/Senigallia/Civitanova were added.
+// Fares as they were before Fano/Marotta/Senigallia/Civitanova were added.
 // Columns: base (Trieste…Rimini), pesaro, ancona, pescara.
 const FARES = {
   kryvyi: [150, 160, 170, 170], kropyv: [150, 160, 170, 170], cherkasy: [150, 160, 160, 160],
@@ -11,7 +11,7 @@ const TIER = {
   trieste: 0, venezia: 0, padova: 0, rovigo: 0, ferrara: 0, bologna: 0, imola: 0, forli: 0, rimini: 0,
   pesaro: 1, ancona: 2, pescara: 3
 };
-const ANCONA_ALIASES = ['fano', 'morotta', 'senigallia', 'civitanova'];
+const ANCONA_ALIASES = ['fano', 'marotta', 'senigallia', 'civitanova'];
 
 const UA_POINTS = {
   kryvyi: '95 квартал', kropyv: 'автостанція', cherkasy: 'автостанція 2',
@@ -25,14 +25,14 @@ const IT_POINTS = {
   forli: 'Via Alessandro Volta, autostazione', rimini: 'Piazzale Cesare Battisti 22',
   pesaro: 'Piazza Marcello Stefanini, Palasport',
   fano: 'https://maps.app.goo.gl/a7NMvSwVXZ5C8ao8A',
-  morotta: 'Точну точку повідомить менеджер',
+  marotta: 'Точну точку повідомить менеджер',
   senigallia: 'https://maps.app.goo.gl/BvrwVkH8WimkSbmXA',
   ancona: 'Piazza Rosselli, stazione F.S.',
   civitanova: 'https://maps.app.goo.gl/v1aETRoXKfp2Awd76',
   pescara: 'Piazzale Terminal Bus, fronte stazione FS'
 };
 const IT_ORDER = ['trieste', 'venezia', 'padova', 'rovigo', 'ferrara', 'bologna', 'imola', 'forli', 'rimini',
-  'pesaro', 'fano', 'morotta', 'senigallia', 'ancona', 'civitanova', 'pescara'];
+  'pesaro', 'fano', 'marotta', 'senigallia', 'ancona', 'civitanova', 'pescara'];
 
 export async function testRoutes(browser, base, pass) {
   const { Component } = await import('../src/booking.js');
@@ -52,7 +52,7 @@ export async function testRoutes(browser, base, pass) {
     setState({ lang });
     for (const [k, text] of Object.entries(IT_POINTS)) {
       setState({ dir: 'ua_it', from: 'lviv', to: k });
-      const expected = k === 'morotta' ? model.t().ui.addressPending : text;
+      const expected = k === 'marotta' ? model.t().ui.addressPending : text;
       assert.equal(model.routeNames().tp, expected, lang + ' ' + k);
     }
   }
@@ -74,7 +74,7 @@ export async function testRoutes(browser, base, pass) {
     setState({ dir: 'ua_it', from: 'kryvyi', to: k, pax: '1', extraKg: 0, dateOut: '2026-10-20', seats: [],
       lead: { first: 'Тест', last: 'Тестенко', phone: '0674704617' }, extra: [], email: '', comment: '' });
     const p = model.payload('site');
-    const name = { fano: 'Fano', morotta: 'Morotta', senigallia: 'Senigallia', civitanova: 'Civitanova' }[k];
+    const name = { fano: 'Fano', marotta: 'Marotta', senigallia: 'Senigallia', civitanova: 'Civitanova' }[k];
     assert.equal(p.toCity, name);
     assert(p.routeLabel.includes(name), p.routeLabel);
     assert(!p.routeLabel.includes('Ancona'), p.routeLabel);
@@ -88,7 +88,7 @@ export async function testRoutes(browser, base, pass) {
   assert.equal(model.timeLabel(model.legInfo(true, 'lviv', 'fano').arr), model.t().durationNA);
   setState({ dir: 'it_ua', from: 'fano', to: 'lviv' });
   assert.equal(model.boardingOffset('it_ua', 'fano'), 0);
-  pass('fares unchanged, Fano/Morotta/Senigallia/Civitanova priced as Ancona with own names, boarding points in UA/RU/IT');
+  pass('fares unchanged, Fano/Marotta/Senigallia/Civitanova priced as Ancona with own names, boarding points in UA/RU/IT');
 
   // Browser: route selects, address block with map link, real destination in the POST.
   const context = await browser.newContext({ viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true });
