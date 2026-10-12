@@ -55,11 +55,11 @@ const IT_CITIES = [
   { k: 'forli', name: 'Forlì', tier: 'base', arr: ['thu', '06:00'], dep: ['fri', '20:20'], points: ['Via Alessandro Volta, autostazione'] },
   { k: 'rimini', name: 'Rimini', tier: 'base', arr: ['thu', '07:00'], dep: ['fri', '19:20'], points: ['Piazzale Cesare Battisti 22'] },
   { k: 'pesaro', name: 'Pesaro', tier: 'pesaro', arr: ['thu', '07:30'], dep: ['fri', '18:40'], points: ['Piazza Marcello Stefanini, Palasport'] },
-  { k: 'fano', name: 'Fano', tier: 'ancona', arr: null, dep: null, map: 'https://maps.app.goo.gl/a7NMvSwVXZ5C8ao8A' },
+  { k: 'fano', name: 'Fano', tier: 'ancona', arr: null, dep: null, points: ['Casello A14 Fano, parcheggio'] },
   { k: 'marotta', name: 'Marotta', tier: 'ancona', arr: null, dep: null },
-  { k: 'senigallia', name: 'Senigallia', tier: 'ancona', arr: null, dep: null, map: 'https://maps.app.goo.gl/BvrwVkH8WimkSbmXA' },
+  { k: 'senigallia', name: 'Senigallia', tier: 'ancona', arr: null, dep: null, points: ['Viale Giordano Bruno, distributore Enilive'] },
   { k: 'ancona', name: 'Ancona', tier: 'ancona', arr: ['thu', '09:00'], dep: ['fri', '17:30'], points: ['Piazza Rosselli, stazione F.S.'] },
-  { k: 'civitanova', name: 'Civitanova', tier: 'ancona', arr: null, dep: null, map: 'https://maps.app.goo.gl/v1aETRoXKfp2Awd76' },
+  { k: 'civitanova', name: 'Civitanova', tier: 'ancona', arr: null, dep: null, points: ['Via Luigi Einaudi, centro commerciale Megauno'] },
   { k: 'pescara', name: 'Pescara', tier: 'pescara', arr: ['thu', '11:00'], dep: ['fri', '15:00'], points: ['Piazzale Terminal Bus, fronte stazione FS'] }
 ];
 

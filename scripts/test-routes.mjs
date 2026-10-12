@@ -24,11 +24,11 @@ const IT_POINTS = {
   ferrara: 'Piazza Stazione', bologna: 'Piazza XX Settembre 6', imola: 'Via Romagnoli',
   forli: 'Via Alessandro Volta, autostazione', rimini: 'Piazzale Cesare Battisti 22',
   pesaro: 'Piazza Marcello Stefanini, Palasport',
-  fano: 'https://maps.app.goo.gl/a7NMvSwVXZ5C8ao8A',
+  fano: 'Casello A14 Fano, parcheggio',
   marotta: 'Точну точку повідомить менеджер',
-  senigallia: 'https://maps.app.goo.gl/BvrwVkH8WimkSbmXA',
+  senigallia: 'Viale Giordano Bruno, distributore Enilive',
   ancona: 'Piazza Rosselli, stazione F.S.',
-  civitanova: 'https://maps.app.goo.gl/v1aETRoXKfp2Awd76',
+  civitanova: 'Via Luigi Einaudi, centro commerciale Megauno',
   pescara: 'Piazzale Terminal Bus, fronte stazione FS'
 };
 const IT_ORDER = ['trieste', 'venezia', 'padova', 'rovigo', 'ferrara', 'bologna', 'imola', 'forli', 'rimini',
@@ -113,9 +113,8 @@ export async function testRoutes(browser, base, pass) {
   const details = page.locator('.trip-details').first();
   const text = await details.innerText();
   assert(text.includes('Кривий Ріг — 95 квартал'), text);
-  assert(text.includes('Fano'), text);
-  const mapLink = details.locator('a[href="https://maps.app.goo.gl/a7NMvSwVXZ5C8ao8A"]');
-  assert.equal(await mapLink.count() > 0, true);
+  assert(text.includes('Fano — Casello A14 Fano, parcheggio'), text);
+  assert.equal(await details.locator('a[href*="maps.app.goo.gl"]').count(), 0);
   await page.locator('#passenger-1-first').fill('Тест');
   await page.locator('#passenger-1-last').fill('Тестенко');
   await page.locator('#passenger-1-phone').fill('0674704617');
@@ -126,7 +125,7 @@ export async function testRoutes(browser, base, pass) {
   assert.equal(payload.fromCity, 'Кривий Ріг');
   assert.equal(payload.totalEur, 170);
   assert.equal(payload.boardingAddress, '95 квартал');
-  assert.equal(payload.dropoffAddress, 'https://maps.app.goo.gl/a7NMvSwVXZ5C8ao8A');
+  assert.equal(payload.dropoffAddress, 'Casello A14 Fano, parcheggio');
 
   await page.keyboard.press('Escape');
   await page.locator('[data-v=direction]').nth(1).click();
@@ -134,5 +133,5 @@ export async function testRoutes(browser, base, pass) {
   for (const k of ANCONA_ALIASES) assert(!itFrom.includes(k), 'unscheduled departure offered: ' + k);
   assert(itFrom.includes('ancona') && itFrom.includes('pescara'));
   await context.close();
-  pass('route select order without duplicates, map link for Fano, real destination and Ancona fare in the mock POST');
+  pass('route select order without duplicates, written address for Fano, real destination and Ancona fare in the mock POST');
 }
