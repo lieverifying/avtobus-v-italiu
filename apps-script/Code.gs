@@ -665,6 +665,7 @@ function leadSheets_() {
  */
 function migrateLeadSheet_(sh, dryRun) {
   var log = [];
+  if (!sh.getLastColumn() || !sh.getLastRow()) return ['порожній аркуш — пропущено'];
   var idx = headerIndex_(sh);
   var last = sh.getLastRow();
 

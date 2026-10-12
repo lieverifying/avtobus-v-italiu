@@ -19,7 +19,11 @@ class Sheet {
     while (row.length < c) row.push('');
     row[c - 1] = v;
   }
-  getRange(r, c, nr = 1, nc = 1) { return new Range(this, r, c, nr, nc); }
+  getRange(r, c, nr = 1, nc = 1) {
+    if (nr < 1) throw new Error('The number of rows in the range must be at least 1.');
+    if (nc < 1) throw new Error('The number of columns in the range must be at least 1.');
+    return new Range(this, r, c, nr, nc);
+  }
   deleteColumn(c) {
     this.cells.forEach(r => r.splice(c - 1, 1));
     this.notes.forEach(r => r.splice(c - 1, 1));
@@ -193,6 +197,7 @@ const oldRow = (id, name, phone, trip) => [id, new Date('2026-10-01T10:00:00Z'),
   const { ctx, ss } = load();
   const sh = ss.insertSheet('ЗАЯВКИ');
   const flight = ss.insertSheet('Рейс 13.10.2026');
+  const empty = ss.insertSheet('Рейс 20.10.2026');
   const seats = ss.insertSheet('ПОСАДОЧНІ МІСЦЯ');
   seats.appendRow(['Маршрут', 'Дата', 'Місце', 'Статус']);
   for (const s of [sh, flight]) {
@@ -220,6 +225,7 @@ const oldRow = (id, name, phone, trip) => [id, new Date('2026-10-01T10:00:00Z'),
     assert.equal(s.notes[2][6], 'APP-261002-2222');
   }
   assert.deepEqual(seats.cells[0], ['Маршрут', 'Дата', 'Місце', 'Статус']);
+  assert.equal(empty.cells.length, 0, 'empty lead sheet is skipped');
   // after migration: new leads and duplicates work, running migration again changes nothing
   const res = post(ctx, LEAD);
   assert.equal(res.success, true);
@@ -231,7 +237,7 @@ const oldRow = (id, name, phone, trip) => [id, new Date('2026-10-01T10:00:00Z'),
   const snapshot = JSON.stringify(sh.cells);
   ctx.migrateLeadSheets();
   assert.equal(JSON.stringify(sh.cells), snapshot);
-  pass('migration: ID column removed into notes, dates swapped with their data, custom columns kept, rerun is a no-op');
+  pass('migration: ID column removed into notes, dates swapped with their data, custom columns kept, empty sheets skipped, rerun is a no-op');
 }
 
 console.log(`${groups} Apps Script groups passed (in-memory mock, nothing sent).`);
