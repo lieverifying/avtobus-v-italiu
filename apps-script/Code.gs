@@ -206,7 +206,99 @@ function doGet(e) {
   }
 }
 
+/* ---------- Захист від спаму ---------- */
+
+/**
+ * Адреса цього скрипта видна в коді сайту, тому бот може слати заявки напряму.
+ * Захист працює тут, на сервері:
+ *  - ліміти частоти (на весь сайт і на один телефон) через CacheService;
+ *  - підозрілі заявки (пастка для ботів, надто швидке заповнення, посилання в імені,
+ *    неможливий телефон) пишуться в окремий аркуш ПІДОЗРІЛІ без Telegram, листів і місць;
+ *  - лист клієнту — не частіше разу на 6 годин на адресу і тільки поки є запас квоти Gmail.
+ */
+var SHEET_SPAM = 'ПІДОЗРІЛІ';
+var LIMIT_SITE_10MIN = 30;    // заявок на весь сайт за 10 хвилин
+var LIMIT_SITE_6H = 150;      // заявок на весь сайт за 6 годин
+var LIMIT_PHONE_HOUR = 6;     // спроб з одного телефону за годину (WhatsApp + форма + повтори)
+var MIN_FILL_MS = 2500;       // швидше людина форму не заповнить
+var MAIL_RESERVE = 20;        // листів, які завжди лишаємо для менеджерів
+var CLIENT_MAIL_TTL = 21600;  // 6 годин між листами на одну адресу
+
+function cache_() {
+  try { return CacheService.getScriptCache(); } catch (e) { return null; }
+}
+
+/** Лічильник у кеші: +1 і нове значення. Викликається під LockService у doPost. */
+function bump_(key, ttl) {
+  var c = cache_();
+  if (!c) return 0;
+  var n = (parseInt(c.get(key), 10) || 0) + 1;
+  c.put(key, String(n), ttl);
+  return n;
+}
+
+/** '' — можна приймати; 'rate_limited' — відмова без запису. */
+function rateLimit_(d) {
+  var now = Date.now();
+  var b10 = Math.floor(now / 600000), b6 = Math.floor(now / 21600000), bh = Math.floor(now / 3600000);
+  var site10 = bump_('rl:s10:' + b10, 900);
+  var site6 = bump_('rl:s6:' + b6, 21600);
+  if (site10 > LIMIT_SITE_10MIN || site6 > LIMIT_SITE_6H) {
+    floodAlert_(b10);
+    return 'rate_limited';
+  }
+  var key = phoneKey_(d.phone);
+  if (key && bump_('rl:p:' + key + ':' + bh, 3900) > LIMIT_PHONE_HOUR) return 'rate_limited';
+  return '';
+}
+
+/** Одне попередження в Telegram на кожні 10 хвилин наплину. */
+function floodAlert_(bucket) {
+  var c = cache_();
+  if (!c || c.get('rl:alert:' + bucket)) return;
+  c.put('rl:alert:' + bucket, '1', 900);
+  sendTelegramText_('Увага: забагато заявок із сайту за короткий час. Нові заявки тимчасово відхиляються, клієнтам показано WhatsApp і телефон.');
+}
+
+/** Причина, чому заявка схожа на спам, або ''. */
+function spamReason_(d) {
+  if (clean_(d.hp, 200)) return 'пастка для ботів';
+  var elapsed = Number(d.elapsedMs);
+  if (d.elapsedMs !== undefined && d.elapsedMs !== '' && isFinite(elapsed) && elapsed < MIN_FILL_MS) return 'заповнено за ' + Math.round(elapsed) + ' мс';
+  var name = clean_(d.fullName, 200);
+  if (/https?:|www\.|<|>|\[url/i.test(name)) return 'посилання в імені';
+  if (!/[A-Za-zА-Яа-яІіЇїЄєҐґ]{2}/.test(name)) return 'немає імені';
+  var digits = String(d.phone || '').replace(/[^0-9]/g, '');
+  // клієнт із WhatsApp/Viber уже пише менеджеру в чат — кривий номер не привід ховати заявку
+  var messenger = /^(WhatsApp|Viber)$/.test(clean_(d.channel, 20));
+  if (!messenger && (digits.length < 9 || digits.length > 15)) return 'неможливий телефон';
+  if (digits.length < 5) return 'немає телефону';
+  if ((String(d.comment || '').match(/https?:|www\./gi) || []).length > 1) return 'посилання в коментарі';
+  return '';
+}
+
+function quarantine_(d, reason) {
+  var headers = APP_HEADERS.concat(['Причина']);
+  var sh = sheet_(SHEET_SPAM, headers);
+  appendLead_(sh, leadRecord_(d, new Date()), '');
+  var col = headerIndex_(sh)['Причина'];
+  if (!col) {
+    col = sh.getLastColumn() + 1;
+    sh.getRange(1, col).setValue('Причина').setFontWeight('bold');
+  }
+  sh.getRange(sh.getLastRow(), col).setValue(reason);
+}
+
+function mailQuotaLeft_() {
+  try { return MailApp.getRemainingDailyQuota(); } catch (e) { return 0; }
+}
+
 /* ---------- POST: нова заявка ---------- */
+
+function newId_() {
+  return 'APP-' + Utilities.formatDate(new Date(), Session.getScriptTimeZone(), 'yyMMdd') +
+    '-' + String(Math.floor(Math.random() * 9000) + 1000);
+}
 
 function doPost(e) {
   var lock = LockService.getScriptLock();
@@ -217,6 +309,16 @@ function doPost(e) {
 
     if (!clean_(d.fullName) || !clean_(d.phone)) {
       return json_({ success: false, error: 'Не вдалося зберегти заявку' });
+    }
+
+    var limited = rateLimit_(d);
+    if (limited) return json_({ success: false, error: limited });
+
+    // бот не повинен дізнатися, що його відсіяли: відповідь така сама, як для справжньої заявки
+    var reason = spamReason_(d);
+    if (reason) {
+      quarantine_(d, reason);
+      return json_({ success: true, id: newId_() });
     }
 
     // одна людина — одна заявка на дату (з будь-якого браузера чи пристрою)
@@ -232,8 +334,7 @@ function doPost(e) {
     }
 
     var sh = sheet_(SHEET_APPS, APP_HEADERS);
-    var id = 'APP-' + Utilities.formatDate(new Date(), Session.getScriptTimeZone(), 'yyMMdd') +
-      '-' + String(Math.floor(Math.random() * 9000) + 1000);
+    var id = newId_();
 
     var rec = leadRecord_(d, new Date());
 
@@ -261,7 +362,7 @@ function doPost(e) {
 
 /** Лист менеджеру про нову заявку. */
 function notify_(id, d) {
-  if (!NOTIFY_EMAILS) return;
+  if (!NOTIFY_EMAILS || mailQuotaLeft_() < 1) return;
   try {
     var route = clean_(d.routeLabel || (clean_(d.fromCity) + ' → ' + clean_(d.toCity)), 140);
     var date = clean_(d.dateLabel || d.date, 40);
@@ -327,7 +428,12 @@ function notify_(id, d) {
 /** Лист-підтвердження клієнту. */
 function confirm_(id, d) {
   var to = clean_(d.email, 120);
-  if (!to || to.indexOf('@') < 1) return;
+  if (!/^[^\s@,;]+@[^\s@,;]+\.[^\s@,;]{2,}$/.test(to)) return;
+  if (mailQuotaLeft_() <= MAIL_RESERVE) return;
+  var c = cache_();
+  var mailKey = 'rl:mail:' + to.toLowerCase();
+  if (c && c.get(mailKey)) return;
+  if (c) c.put(mailKey, '1', CLIENT_MAIL_TTL);
 
   var L = {
     ua: {
@@ -476,6 +582,20 @@ function telegramText_(d) {
   var channel = plain_(d.channel, 40);
   if (channel && channel !== 'Сайт') lines.push('Канал: ' + channel + ' (клієнт також написав у месенджер)');
   return lines.join('\n');
+}
+
+/** Службове повідомлення в Telegram (без кнопок). */
+function sendTelegramText_(text) {
+  if (!TG_TOKEN || !TG_CHAT) return;
+  try {
+    UrlFetchApp.fetch('https://api.telegram.org/bot' + TG_TOKEN + '/sendMessage', {
+      method: 'post',
+      payload: { chat_id: TG_CHAT, text: text, disable_web_page_preview: true },
+      muteHttpExceptions: true
+    });
+  } catch (err) {
+    Logger.log('Telegram error: ' + err);
+  }
 }
 
 /** Повідомлення в Telegram. */

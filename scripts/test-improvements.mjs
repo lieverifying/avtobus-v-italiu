@@ -138,6 +138,8 @@ export async function testImprovements(browser, base, pass) {
     assert.equal(posts,before+1);
     assert.equal(payload.channel,'WhatsApp'); assert.equal(payload.phone,'0383469646798');
     assert.equal(payload.fullName,'Test Passenger'); assert.equal(payload.seatPreference,'any');
+    assert.equal(payload.hp,''); assert(Number.isFinite(payload.elapsedMs) && payload.elapsedMs>0, String(payload.elapsedMs));
+    assert(await page.locator('#booking-website').evaluate(el=>el.getBoundingClientRect().right<0 && el.tabIndex===-1));
     const [again]=await Promise.all([context.waitForEvent('page'), wa.click()]); await again.close();
     await page.waitForTimeout(300); assert.equal(posts,before+1);
     await page.locator('[data-v=seat]').filter({hasText:/^5$/}).click();

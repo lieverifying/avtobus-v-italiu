@@ -351,6 +351,7 @@ export class Component extends React.Component {
   };
 
   componentDidMount() {
+    this.startedAt = this.formStartedAt();
     const next = this.readDraft() || {};
     const l = this.detectLang();
     if (l && l !== this.state.lang) next.lang = l;
@@ -989,7 +990,8 @@ export class Component extends React.Component {
         seat: s.seats[i] || ''
       })),
       passengersFlat: ps.map((p, i) => (i + 1) + ') ' + p.first + ' ' + p.last + ' · ' + this.normalizePhone(p.phone) + ' · ' + (s.seats[i] || this.t().ui.anySeat)).join(' | '),
-      message: this.message()
+      message: this.message(),
+      ...this.antiSpam()
     };
   }
 
@@ -1012,6 +1014,23 @@ export class Component extends React.Component {
 
   // Клієнт пішов у WhatsApp/Viber: дублюємо заявку в таблицю, Telegram і пошту,
   // щоб менеджер не залежав від того, чи дійде повідомлення в месенджер.
+  // Час відкриття форми в цій вкладці: не скидається при зміні мови, щоб відновлений
+  // чернетка не виглядала для сервера як «заповнено за секунду».
+  formStartedAt() {
+    const now = Date.now();
+    try {
+      const saved = parseInt(sessionStorage.getItem('avtobus.form-started'), 10);
+      if (saved && saved <= now && now - saved < 86400000) return saved;
+      sessionStorage.setItem('avtobus.form-started', String(now));
+    } catch (e) {}
+    return now;
+  }
+
+  antiSpam() {
+    const trap = typeof document !== 'undefined' ? document.getElementById('booking-website') : null;
+    return { hp: trap ? String(trap.value || '').slice(0, 200) : '', elapsedMs: this.startedAt ? Date.now() - this.startedAt : '' };
+  }
+
   mirrorLead(channel) {
     const s = this.state;
     const url = this.endpoint();

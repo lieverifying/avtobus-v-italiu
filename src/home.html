@@ -325,6 +325,7 @@
           </sc-for>
 
           <div style="margin-top:18px">
+            <div class="hp-field" aria-hidden="true"><label>Website <input id="booking-website" name="company_site" type="text" tabindex="-1" autocomplete="off"></label></div>
             <label data-field="booking-email" style="display:flex;flex-direction:column;gap:7px;max-width:520px">
               <span style="{{ lblLight }}">{{ t.ui.emailLabel }}</span>
               <input id="booking-email" disabled="{{ sending }}" type="email" aria-invalid="{{ emailInvalid }}" aria-describedby="{{ emailDescription }}" value="{{ email }}" onChange="{{ onEmail }}" onBlur="{{ onEmailBlur }}" autocomplete="email" inputmode="email" placeholder="{{ t.ph2.email }}" style="{{ emailStyle }}" />

@@ -54,7 +54,8 @@ class Range {
   setFontWeight() { return this; }
 }
 
-function load({ token = 'TEST-TOKEN' } = {}) {
+function load({ token = 'TEST-TOKEN', quota = 100 } = {}) {
+  const cache = new Map();
   const sheets = [];
   const ss = {
     getSheetByName: n => sheets.find(s => s.name === n) || null,
@@ -74,14 +75,15 @@ function load({ token = 'TEST-TOKEN' } = {}) {
     Session: { getScriptTimeZone: () => 'Europe/Kyiv' },
     ContentService: { createTextOutput: t => ({ text: t, setMimeType() { return this; } }), MimeType: { JSON: 'json' } },
     LockService: { getScriptLock: () => ({ waitLock() {}, releaseLock() {} }) },
-    MailApp: { sendEmail: m => sent.mail.push(m), getRemainingDailyQuota: () => 100 },
+    MailApp: { sendEmail: m => sent.mail.push(m), getRemainingDailyQuota: () => quota },
+    CacheService: { getScriptCache: () => ({ get: k => cache.has(k) ? cache.get(k) : null, put: (k, v) => cache.set(k, String(v)) }) },
     UrlFetchApp: { fetch: (url, o) => { sent.telegram.push({ url, ...o.payload }); return { getContentText: () => '{"ok":true}' }; } },
     Logger: { log() {} },
     JSON, Math, Date, String, Number, Object, parseInt, Error
   };
   vm.createContext(ctx);
   vm.runInContext(readFileSync(new URL('../apps-script/Code.gs', import.meta.url), 'utf8'), ctx);
-  return { ctx, ss, sheets, sent };
+  return { ctx, ss, sheets, sent, cache };
 }
 
 const post = (ctx, d) => JSON.parse(ctx.doPost({ postData: { contents: JSON.stringify(d) } }).text);
@@ -238,6 +240,75 @@ const oldRow = (id, name, phone, trip) => [id, new Date('2026-10-01T10:00:00Z'),
   ctx.migrateLeadSheets();
   assert.equal(JSON.stringify(sh.cells), snapshot);
   pass('migration: ID column removed into notes, dates swapped with their data, custom columns kept, empty sheets skipped, rerun is a no-op');
+}
+
+// 5. Spam protection: quarantine, rate limits, mail quota.
+{
+  const { ctx, sheets, sent } = load();
+  const apps = () => sheets.find(s => s.name === 'ЗАЯВКИ');
+  const spam = () => sheets.find(s => s.name === 'ПІДОЗРІЛІ');
+  let n = 0;
+  const fresh = extra => ({ ...LEAD, seats: '', phone: '+38067' + String(1000000 + (++n)), email: '', ...extra });
+  for (const [extra, reason] of [
+    [{ hp: 'http://spam.example' }, 'пастка для ботів'],
+    [{ elapsedMs: 800 }, 'заповнено за 800 мс'],
+    [{ fullName: 'Buy now https://x.example' }, 'посилання в імені'],
+    [{ fullName: '12345' }, 'немає імені'],
+    [{ phone: '12345678' }, 'неможливий телефон']
+  ]) {
+    const before = sent.telegram.length;
+    const res = post(ctx, fresh(extra));
+    assert.equal(res.success, true, 'bot gets the same answer as a real lead');
+    assert.match(res.id, /^APP-/);
+    assert.equal(sent.telegram.length, before, reason + ': no Telegram');
+    const sh = spam(); const h = sh.cells[0];
+    assert.equal(sh.cells[sh.cells.length - 1][h.indexOf('Причина')], reason);
+  }
+  assert.equal(apps(), undefined, 'nothing reached ЗАЯВКИ');
+  assert.equal(sent.mail.length, 0);
+  // messenger lead with a typo phone (real case) is NOT quarantined
+  const wa = post(ctx, fresh({ phone: '0383469646798', channel: 'WhatsApp', elapsedMs: 60000 }));
+  assert.equal(wa.success, true);
+  assert.equal(apps().cells.length, 2);
+  assert(sent.telegram[sent.telegram.length - 1].text.includes('Канал: WhatsApp'));
+  // normal slow human passes
+  const human = post(ctx, fresh({ elapsedMs: 45000 }));
+  assert.equal(human.success, true, JSON.stringify(human));
+  assert.equal(apps().cells.length, 3);
+  pass('spam: honeypot, too-fast, links, no name, bad phone go to ПІДОЗРІЛІ silently; messenger typo phone and humans pass');
+}
+{
+  const { ctx, sheets, sent } = load();
+  // same phone, different dates: 6 attempts per hour allowed
+  const one = d => post(ctx, { ...LEAD, seats: '', email: '', date: d, dateLabel: d });
+  const days = ['2026-12-01', '2026-12-08', '2026-12-15', '2026-12-22', '2026-12-29', '2027-01-05'];
+  assert.deepEqual(days.map(d => one(d).success), [true, true, true, true, true, true]);
+  assert.deepEqual([one('2027-01-12').success, one('2027-01-12').error], [false, 'rate_limited']);
+  // site-wide flood: 30 per 10 minutes, then rejected with one Telegram alert
+  const { ctx: c2, sheets: s2, sent: t2 } = load();
+  let ok = 0, limited = 0;
+  for (let i = 0; i < 40; i++) {
+    const r = post(c2, { ...LEAD, seats: '', email: '', phone: '+38050' + String(1000000 + i) });
+    if (r.success) ok++; else if (r.error === 'rate_limited') limited++;
+  }
+  assert.deepEqual([ok, limited], [30, 10]);
+  assert.equal(s2.find(s => s.name === 'ЗАЯВКИ').cells.length, 31);
+  assert.equal(t2.telegram.filter(m => m.text.startsWith('Увага: забагато заявок')).length, 1);
+  pass('rate limits: 6 per phone per hour, 30 per site per 10 minutes, a single flood alert');
+}
+{
+  // client confirmation: valid address only, once per 6h per address, keep quota for managers
+  const { ctx, sent } = load();
+  post(ctx, { ...LEAD, seats: '', email: 'client@example.com', phone: '+380501000001' });
+  post(ctx, { ...LEAD, seats: '', email: 'client@example.com', phone: '+380501000002' });
+  post(ctx, { ...LEAD, seats: '', email: 'not-an-email@', phone: '+380501000003' });
+  assert.equal(sent.mail.filter(m => m.to === 'client@example.com').length, 1);
+  assert.equal(sent.mail.filter(m => m.to === 'not-an-email@').length, 0);
+  const low = load({ quota: 15 });
+  post(low.ctx, { ...LEAD, email: 'client@example.com' });
+  assert.equal(low.sent.mail.filter(m => m.to === 'client@example.com').length, 0);
+  assert(low.sent.mail.some(m => String(m.to).includes('Oktobus109')), 'manager still notified');
+  pass('client email: valid address, once per 6 hours, skipped when Gmail quota is nearly spent');
 }
 
 console.log(`${groups} Apps Script groups passed (in-memory mock, nothing sent).`);
