@@ -91,8 +91,6 @@ export async function testImprovements(browser, base, pass) {
     await person(page,1,'+38022336669999999'); await person(page,2,'+393201234567');
     await page.locator('#booking-email').fill('test@example.com'); await page.locator('#booking-consent').check();
     assert((await page.locator('[data-v=trust]').innerText()).includes('щосуботи'));
-    await page.locator('.seat-picker > summary').click();
-    await page.getByRole('button',{name:'Обрати місце на схемі',exact:true}).click();
     await page.locator('[data-v=seat]').filter({hasText:/^1$/}).click();
     await page.locator('[data-v=seat]').filter({hasText:/^3$/}).click();
     await page.locator('#v3pax details').first().locator('summary').click();
@@ -128,26 +126,48 @@ export async function testImprovements(browser, base, pass) {
     pass('UA/RU/IT preserve same-session draft, reverse route, date, all passengers, baggage, consent and freshly checked seats; success clears draft');
   }
 
+  {
+    const {context,page}=await setup(); await chooseRoute(page);
+    await context.route('https://wa.me/**', route => route.fulfill({body:'ok'}));
+    await person(page,1,'0383469646798');
+    const before=posts;
+    const wa=page.locator('a[href^="https://wa.me/"][href*="text="]').first();
+    const [popup]=await Promise.all([context.waitForEvent('page'), wa.click()]);
+    await popup.close();
+    await page.waitForFunction(()=>true); await page.waitForTimeout(300);
+    assert.equal(posts,before+1);
+    assert.equal(payload.channel,'WhatsApp'); assert.equal(payload.phone,'0383469646798');
+    assert.equal(payload.fullName,'Test Passenger'); assert.equal(payload.seatPreference,'any');
+    const [again]=await Promise.all([context.waitForEvent('page'), wa.click()]); await again.close();
+    await page.waitForTimeout(300); assert.equal(posts,before+1);
+    await page.locator('[data-v=seat]').filter({hasText:/^5$/}).click();
+    const [third]=await Promise.all([context.waitForEvent('page'), wa.click()]); await third.close();
+    await page.waitForTimeout(300); assert.equal(posts,before+2); assert.equal(payload.seats,'5');
+    await page.locator('button.copy-viber').click(); await page.waitForTimeout(300);
+    assert.equal(posts,before+2);
+    await context.close();
+    pass('WhatsApp/Viber click mirrors the application to the sheet once per version, even with an unvalidated phone');
+  }
+
   for (const width of [320,390,430,768,1280]) {
     const {context,page}=await setup(width);await chooseRoute(page);
     const metrics=await page.evaluate(()=>({formY:document.getElementById('v3pax').getBoundingClientRect().top,
       bar:document.querySelector('[data-v=mbar]').getBoundingClientRect().height,
       columns:getComputedStyle(document.querySelector('.onboard-grid')).gridTemplateColumns.split(' ').length}));
-    assert.equal(await page.locator('.seat-picker').getAttribute('open'),null);
-    assert.equal(await page.locator('[data-v=seat]').count(),0);
+    await page.locator('[data-v=seat][data-status=taken]').first().waitFor();
+    assert.equal(await page.locator('[data-v=seat]').count(),50);
+    assert.equal(await page.locator('[data-v=seat][data-status=taken]').filter({hasText:/^2$/}).count(),1);
     assert.equal(await page.locator('[data-v=mbar] a').count(),0);
     assert.equal(await page.locator('[data-v=mbar] button').count(),1);
-    if (width<600) { assert(metrics.bar<=70,JSON.stringify(metrics));assert(metrics.formY<1750,JSON.stringify(metrics)); }
-    if (width===390) assert(metrics.formY<1500,JSON.stringify(metrics));
+    // Seat map is open by default (owner's request), so on phones the form starts after ~13 seat rows.
+    if (width<600) { assert(metrics.bar<=70,JSON.stringify(metrics));assert(metrics.formY<2900,JSON.stringify(metrics)); }
+    if (width===390) assert(metrics.formY<2700,JSON.stringify(metrics));
+    if (process.env.PRINT_METRICS) console.log('metrics', width, JSON.stringify(metrics));
     assert.equal(metrics.columns,width===1280?3:width===768?2:1);
     await page.locator('.trip-details > summary').click();
     assert((await page.locator('.trip-details').innerText()).includes('Львів — Центральний автовокзал'));
     await page.locator('.trip-details > summary').click();
-    await page.locator('.seat-picker > summary').click();await page.getByRole('button',{name:'Обрати місце на схемі',exact:true}).click();
-    await page.locator('[data-v=seat]').first().waitFor();
     if(width<600) assert(await page.locator('[data-v=seat]').first().evaluate(el=>el.getBoundingClientRect().width>=44));
-    await page.locator('.seat-picker > summary').click();
-    assert.equal(await page.locator('.seat-picker').getAttribute('open'),null);
     assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth),width);
     if(width===390 || width===1280) {
       await page.evaluate(()=>scrollTo(0,0));await page.evaluate(()=>document.fonts.ready);
@@ -155,7 +175,7 @@ export async function testImprovements(browser, base, pass) {
     }
     await context.close();
   }
-  pass('compact mobile route/form, collapsed optional seats, 66px one-button bar, 3x2 desktop benefits and no horizontal overflow');
+  pass('compact mobile route/form, seat map open by default, 66px one-button bar, 3x2 desktop benefits and no horizontal overflow');
 
   {
     const {context,page}=await setup();

@@ -1,7 +1,7 @@
 export const P0_COPY = {
   ua: {
     anySeat:'Будь-яке — підбере менеджер', chooseSeat:'Обрати місце на схемі',
-    optionalSeat:'Вибір місця необов’язковий. Менеджер підтвердить місце після заявки.',
+    seatTapHint:'Натисніть на вільне місце або нічого не обирайте — менеджер підбере місце сам.', optionalSeat:'Вибір місця необов’язковий. Менеджер підтвердить місце після заявки.',
     seatsUnavailable:'Схема тимчасово недоступна. Ви можете надіслати заявку — менеджер підбере місце.',
     toDetails:'Заповнити дані', availabilityOptional:'Місце підтвердить менеджер',
     sendFallback:'Не отримано підтвердження заявки. Надішліть готовий текст у WhatsApp або зателефонуйте.',
@@ -29,7 +29,7 @@ export const P0_COPY = {
   },
   ru: {
     anySeat:'Любое — подберёт менеджер', chooseSeat:'Выбрать место на схеме',
-    optionalSeat:'Выбор места необязателен. Менеджер подтвердит место после заявки.',
+    seatTapHint:'Нажмите на свободное место или ничего не выбирайте — менеджер подберёт место сам.', optionalSeat:'Выбор места необязателен. Менеджер подтвердит место после заявки.',
     seatsUnavailable:'Схема временно недоступна. Вы можете отправить заявку — менеджер подберёт место.',
     toDetails:'Заполнить данные', availabilityOptional:'Место подтвердит менеджер',
     sendFallback:'Не получено подтверждение заявки. Отправьте готовый текст в WhatsApp или позвоните.',
@@ -57,7 +57,7 @@ export const P0_COPY = {
   },
   it: {
     anySeat:'Qualsiasi — sceglie l’operatore', chooseSeat:'Scegli un posto sulla mappa',
-    optionalSeat:'La scelta del posto è facoltativa. L’operatore confermerà il posto dopo la richiesta.',
+    seatTapHint:'Tocca un posto libero oppure non scegliere nulla: il posto lo assegna l’operatore.', optionalSeat:'La scelta del posto è facoltativa. L’operatore confermerà il posto dopo la richiesta.',
     seatsUnavailable:'Mappa temporaneamente non disponibile. Puoi comunque inviare la richiesta: l’operatore sceglierà il posto.',
     toDetails:'Inserisci i dati', availabilityOptional:'Il posto sarà confermato dall’operatore',
     sendFallback:'Conferma della richiesta non ricevuta. Invia il testo pronto su WhatsApp oppure chiama.',

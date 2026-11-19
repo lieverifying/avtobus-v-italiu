@@ -32,9 +32,7 @@ async function audit(page) {
   assert.deepEqual(result.violations.map(v=>({id:v.id,targets:v.nodes.map(n=>({target:n.target,summary:n.failureSummary}))})), []);
 }
 async function openManualSeats(page) {
-  const button = page.getByRole('button',{name:'Обрати місце на схемі',exact:true});
-  if (!await button.isVisible()) await page.locator('.seat-picker > summary').click();
-  await button.click();
+  await page.locator('[data-v="seat"]').first().waitFor();
 }
 const pass = name => { checks++; console.log('PASS ' + name); };
 try {
@@ -96,7 +94,7 @@ try {
     await selects.nth(0).selectOption('lviv');
     await selects.nth(1).selectOption('trieste');
     await selects.nth(2).selectOption({index:1});
-    assert.equal(await page.locator('[data-v=seat]').count(),0);
+    assert.equal(await page.locator('[data-v=seat]').count(),50);
     await openManualSeats(page);
     await page.waitForFunction(()=>document.querySelector('[data-v="seat"][data-status="taken"]'));
     if(width===390) await audit(page);
@@ -267,7 +265,8 @@ async function testP0(browser,base,pass) {
   await selects.nth(1).selectOption('trieste');
   await selects.nth(2).selectOption({index:1});
   const date=await selects.nth(2).inputValue();
-  assert.equal(gets,0,'any seat must not depend on a sheet request');
+  await page.waitForFunction(()=>document.querySelector('[data-v=seat]:not(:disabled)'));
+  assert.equal(gets,1,'seat map loads availability as soon as the date is chosen');
   assert((await page.locator('#v3results').innerText()).includes(date.split('-').reverse().join('.')));
   assert((await page.locator('#v3seats').innerText()).includes(date.split('-').reverse().join('.')));
   const messenger=page.locator('a[href*="wa.me"]').filter({hasText:'WhatsApp'}).first();
@@ -275,8 +274,6 @@ async function testP0(browser,base,pass) {
   assert(href.includes('text='));
   assert(decodeURIComponent(href).includes('Будь-яке'));
   assert.equal(posts,0);
-  await openManualSeats(page);
-  await page.waitForFunction(()=>document.querySelector('[data-v=seat]:not(:disabled)'));
   assert.equal(gets,1);
   await page.clock.fastForward(59000);
   assert.equal(gets,1);
@@ -287,7 +284,8 @@ async function testP0(browser,base,pass) {
   await page.waitForTimeout(100);
   assert.equal(gets,2);
   mode='hang';
-  await openManualSeats(page);
+  await selects.nth(2).selectOption({index:2});
+  await page.waitForTimeout(100);
   assert.equal(gets,3);
   await page.clock.fastForward(10001);
   await page.getByText(T.ua.ui.seatsUnavailable,{exact:true}).waitFor();
@@ -303,5 +301,5 @@ async function testP0(browser,base,pass) {
   assert.equal(lastPayload.phone,'+380671234567');
   assert((await page.getByRole('dialog').innerText()).includes('Львів — Центральний автовокзал'));
   await context.close();
-  pass('optional seats, no default sheet dependency, active-tab 60s polling, 10s timeout and booking despite failed seats');
+  pass('seat map open by default, one availability request per date, active-tab 60s polling, 10s timeout and booking despite failed seats');
 }

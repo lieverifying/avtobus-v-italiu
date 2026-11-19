@@ -247,20 +247,17 @@
   <section id="v3seats" style="scroll-margin-top:86px;max-width:1320px;margin:0 auto;padding:clamp(38px,5vw,64px) clamp(16px,4vw,32px) 0">
     <div data-v="split" style="display:grid;grid-template-columns:0.85fr 1.15fr;gap:clamp(20px,3vw,34px);align-items:start">
 
-      <details data-v="seat-card" class="seat-picker" open="{{ seatPickerOpen }}">
-        <summary onClick="{{ toggleSeatPicker }}"><span><strong>{{ t.ui.seatPickerTitle }}</strong><small>{{ seatSelectionPreview }}</small></span><span class="faq-plus" aria-hidden="true">+</span></summary>
+      <div data-v="seat-card" class="seat-picker">
         <div class="seat-picker-body">
         <div style="display:flex;align-items:baseline;justify-content:space-between;gap:12px;margin-bottom:4px">
           <span style="font-family:'Unbounded',sans-serif;font-weight:700;font-size:18px">{{ t.seat.title }}</span>
           <span style="font-size:13px;font-weight:700;color:#F2B01E">{{ seatCounter }}</span>
         </div>
         <div style="font-size:12.5px;color:#8FA8C6;font-weight:600;margin-bottom:14px">{{ t.seat.sub }}</div>
-        <div class="seat-options" role="group" aria-label="{{ t.seat.title }}">
-          <button type="button" aria-pressed="{{ anySeat }}" disabled="{{ sending }}" onClick="{{ chooseAnySeat }}">{{ t.ui.anySeat }}</button>
-          <button type="button" aria-pressed="{{ manualSeat }}" disabled="{{ sending }}" onClick="{{ chooseManualSeat }}">{{ t.ui.chooseSeat }}</button>
-        </div>
-        <p class="date-note">{{ t.ui.optionalSeat }}</p>
-        <sc-if value="{{ manualSeat }}">
+        <p class="date-note seat-hint">{{ seatSelectionPreview }}</p>
+        <sc-if value="{{ hasSeats }}" hint-placeholder-val="{{ false }}">
+          <button type="button" class="seat-reset" disabled="{{ sending }}" onClick="{{ chooseAnySeat }}">{{ t.ui.anySeat }}</button>
+        </sc-if>
         <sc-if value="{{ needsRoute }}" hint-placeholder-val="{{ false }}">
           <div style="margin-bottom:14px;padding:13px 15px;border:1px dashed rgba(255,255,255,0.2);border-radius:11px;font-size:12.5px;font-weight:700;line-height:1.5;color:#B9CBE1">{{ t.res.empty }}</div>
         </sc-if>
@@ -295,9 +292,8 @@
           <span style="display:flex;align-items:center;gap:6px"><span style="width:12px;height:12px;border-radius:4px;background:rgba(255,255,255,0.02);border:1px dashed rgba(255,255,255,0.16)"></span>{{ t.seat.blocked }}</span>
         </div>
         <div class="cabin-rear">{{ t.ui.rear }}</div>
-        </sc-if>
         </div>
-      </details>
+      </div>
 
       <div>
         <div id="v3pax" style="scroll-margin-top:86px;border:1px solid rgba(255,255,255,0.1);background:rgba(255,255,255,0.03);border-radius:20px;padding:clamp(18px,2.6vw,28px)">
@@ -392,7 +388,7 @@
             </sc-if>
             <sc-if value="{{ sendFailed }}" hint-placeholder-val="{{ false }}">
               <div role="alert" style="margin-top:16px;padding:13px 15px;background:rgba(206,43,55,0.14);border:1px solid rgba(206,43,55,0.42);border-radius:12px;font-size:13.5px;font-weight:700;color:#F0A6A6">{{ t.sendError }}</div>
-              <div class="send-fallback"><p>{{ t.ui.sendFallback }}</p><a class="fallback-wa" href="{{ applicationWhatsApp }}" target="_blank" rel="noopener">{{ t.ui.sendWhatsApp }}</a><a href="{{ callHref }}">{{ helpPhone }}</a></div>
+              <div class="send-fallback"><p>{{ t.ui.sendFallback }}</p><a class="fallback-wa" href="{{ applicationWhatsApp }}" target="_blank" rel="noopener" onClick="{{ mirrorWhatsApp }}">{{ t.ui.sendWhatsApp }}</a><a href="{{ callHref }}">{{ helpPhone }}</a></div>
           </sc-if>
           </div>
         </div>
@@ -461,8 +457,8 @@
           <div style="padding:0 clamp(18px,2.6vw,26px) clamp(18px,2.6vw,26px);display:flex;flex-direction:column;gap:8px">
             <span style="font-size:12.5px;font-weight:700;color:#41597A">{{ t.bar.ask }}</span>
             <div style="display:flex;gap:10px;flex-wrap:wrap">
-              <a href="{{ applicationWhatsApp }}" target="_blank" rel="noopener" style="flex:1;min-width:130px;min-height:50px;display:flex;align-items:center;justify-content:center;background:#25D366;color:#062B14;border-radius:12px;font-weight:800;font-size:14.5px">WhatsApp</a>
-              <a href="{{ viberHref }}" style="flex:1;min-width:130px;min-height:50px;display:flex;align-items:center;justify-content:center;background:transparent;color:#5A48D8;border:1.5px solid rgba(115,96,242,0.55);border-radius:12px;font-weight:800;font-size:14.5px">Viber</a>
+              <a href="{{ applicationWhatsApp }}" target="_blank" rel="noopener" onClick="{{ mirrorWhatsApp }}" style="flex:1;min-width:130px;min-height:50px;display:flex;align-items:center;justify-content:center;background:#25D366;color:#062B14;border-radius:12px;font-weight:800;font-size:14.5px">WhatsApp</a>
+              <a href="{{ viberHref }}" onClick="{{ mirrorViber }}" style="flex:1;min-width:130px;min-height:50px;display:flex;align-items:center;justify-content:center;background:transparent;color:#5A48D8;border:1.5px solid rgba(115,96,242,0.55);border-radius:12px;font-weight:800;font-size:14.5px">Viber</a>
             </div>
             <button type="button" class="copy-viber" onClick="{{ copyApplication }}">{{ t.ui.copyForViber }}</button>
           </div>

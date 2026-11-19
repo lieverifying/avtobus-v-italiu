@@ -473,6 +473,8 @@ function telegramText_(d) {
   var email = plain_(d.email, 120);
   if (email) lines.push(email);
   lines.push('Сума: ' + (Number(d.totalEur) || 0) + ' €');
+  var channel = plain_(d.channel, 40);
+  if (channel && channel !== 'Сайт') lines.push('Канал: ' + channel + ' (клієнт також написав у месенджер)');
   return lines.join('\n');
 }
 

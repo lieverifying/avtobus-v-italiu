@@ -67,7 +67,10 @@ p a, li a { text-decoration:underline; text-underline-offset:3px; }
 .seat-picker strong { display:block; font-size:15px; font-weight:700; line-height:1.45; }
 .seat-picker small { display:block; margin-top:3px; font-size:13px; color:#A9C0DA; line-height:1.4; }
 .seat-picker[open] > summary .faq-plus { transform:rotate(45deg); }
-.seat-picker-body { max-width:480px; margin:0 auto; padding:0 18px 18px; }
+.seat-picker-body { max-width:480px; margin:0 auto; padding:18px; }
+.seat-hint { margin:0 0 12px; }
+.seat-reset { display:block; width:100%; margin:0 0 14px; padding:12px 14px; min-height:46px; text-align:left; font:inherit; font-size:14px; font-weight:700; color:#DCE8F6; border:1px solid #617894; background:transparent; border-radius:12px; cursor:pointer; }
+.seat-reset:hover { border-color:#F2B01E; }
 .onboard-grid { grid-template-columns:repeat(3,minmax(0,1fr)); }
 .bar-price > span { display:block; font-size:12px; font-weight:600; color:#A9C0DA; }
 [data-v="mbar"] > button { flex:1; min-width:0; white-space:normal !important; line-height:1.3; }
@@ -91,7 +94,7 @@ p a, li a { text-decoration:underline; text-underline-offset:3px; }
   [data-v="mbar"] > button { min-height:48px !important; padding:8px 12px !important; }
 }
 @media(max-width:580px) {
-  .seat-picker-body { padding:0 10px 14px; }
+  .seat-picker-body { padding:14px 10px; }
   #v3results, #v3seats { padding-top:24px !important; }
   #v3results h2 { font-size:21px !important; line-height:1.35; }
   #v3results > div:first-child { margin-bottom:12px !important; }

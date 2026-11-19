@@ -333,7 +333,7 @@ export class Component extends React.Component {
     lead: { first: '', last: '', phone: '' },
     extra: [],
     seats: [],
-    seatMode: 'any',
+    seatMode: 'manual',
     seatPickerOpen: false,
     openFaq: 0,
     showErrors: false,
@@ -447,7 +447,7 @@ export class Component extends React.Component {
     const url = this.endpoint();
     const req = ++this.seatReq;
     this.seatAbort?.abort();
-    if (document.visibilityState !== 'visible' || this.state.seatMode === 'any' || !this.state.from || !this.state.to || !this.state.dateOut) {
+    if (document.visibilityState !== 'visible' || !this.state.from || !this.state.to || !this.state.dateOut) {
       return this.setState({ seatStatus: {}, seatsLoading: false, seatsError: false });
     }
     if (!url || !this.state.dateOut) return;
@@ -642,7 +642,7 @@ export class Component extends React.Component {
       const toCities = arrivalCities(dir);
       const pax = Math.min(6, Math.max(1, parseInt(d.pax, 10) || 1));
       const touched = Object.fromEntries(Object.entries(d.touched || {}).filter(([k,v]) => v === true && /^(passenger-[1-6]-(first|last|phone)|booking-email|booking-consent)$/.test(k)));
-      const seatMode = d.seatMode === 'manual' ? 'manual' : 'any';
+      const seatMode = 'manual';
       return {dir, from:fromCities.some(c => c.k === d.from) ? d.from : '',
         to:toCities.some(c => c.k === d.to) ? d.to : '',
         dateOut:typeof d.dateOut === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(d.dateOut) ? d.dateOut : '',
@@ -1010,6 +1010,30 @@ export class Component extends React.Component {
       .finally(() => clearTimeout(timeout));
   }
 
+  // Клієнт пішов у WhatsApp/Viber: дублюємо заявку в таблицю, Telegram і пошту,
+  // щоб менеджер не залежав від того, чи дійде повідомлення в месенджер.
+  mirrorLead(channel) {
+    const s = this.state;
+    const url = this.endpoint();
+    const lead = this.passengers()[0] || { first: '', last: '', phone: '' };
+    if (!url || s.sending || !s.from || !s.to || !s.dateOut) return;
+    if (!(String(lead.first || '') + String(lead.last || '')).trim() || !this.cleanPhone(lead.phone)) return;
+    const sig = this.sig();
+    if (s.sentId || this.mirroredSig === sig) return;
+    this.mirroredSig = sig;
+    try {
+      fetch(url, {
+        method: 'POST',
+        keepalive: true,
+        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+        body: JSON.stringify(this.payload(channel))
+      })
+        .then(r => r.json())
+        .then(d => { if (!(d && (d.success || d.error === 'duplicate'))) this.mirroredSig = ''; })
+        .catch(() => { this.mirroredSig = ''; });
+    } catch (e) { this.mirroredSig = ''; }
+  }
+
   book(channel, onDone) {
     if (this.state.sending) return;
     if (this.missing().length) return this.failValidation();
@@ -1197,8 +1221,8 @@ export class Component extends React.Component {
       isItUa: !uaIt && !!s.from,
       toFlagIt: uaIt && !!s.to,
       toFlagUa: !uaIt && !!s.to,
-      setDirA: () => this.setState({ dir: 'ua_it', from: '', to: '', dateOut: '', seats: [], seatMode:'any' }, () => this.loadSeats()),
-      setDirB: () => this.setState({ dir: 'it_ua', from: '', to: '', dateOut: '', seats: [], seatMode:'any' }, () => this.loadSeats()),
+      setDirA: () => this.setState({ dir: 'ua_it', from: '', to: '', dateOut: '', seats: [], seatMode:'manual' }, () => this.loadSeats()),
+      setDirB: () => this.setState({ dir: 'it_ua', from: '', to: '', dateOut: '', seats: [], seatMode:'manual' }, () => this.loadSeats()),
 
       form: s,
       fromOptions: [{ k: '', name: t.f.choose }].concat(boardingCities(s.dir).map(c => ({ k: c.k, name: this.cityName(c) }))),
@@ -1247,17 +1271,17 @@ export class Component extends React.Component {
       trip: {
         priceLabel: t.priceLabel,
         total: this.money(this.total()),
-        freeLine: s.seatMode === 'any' || s.seatsLoading || s.seatsError ? t.ui.availabilityOptional : freeCount + ' ' + this.plural(freeCount, t.freeForms)
+        freeLine: s.seatsLoading || s.seatsError ? t.ui.availabilityOptional : freeCount + ' ' + this.plural(freeCount, t.freeForms)
       },
 
       seats: seats,
       sending: s.sending,
-      seatCounter: s.seatMode === 'any' ? t.ui.optionalLabel : s.seats.length + ' / ' + this.paxCount(),
-      anySeat: s.seatMode === 'any', manualSeat: s.seatMode === 'manual',
+      seatCounter: s.seats.length ? s.seats.length + ' / ' + this.paxCount() : t.ui.optionalLabel,
+      anySeat: !s.seats.length, manualSeat: true, hasSeats: s.seats.length > 0,
       seatPickerOpen:s.seatPickerOpen,
-      seatSelectionPreview:s.seats.length ? t.f.seat + ': ' + s.seats.join(', ') : t.ui.anySeat,
+      seatSelectionPreview:s.seats.length ? t.f.seat + ': ' + s.seats.join(', ') : t.ui.seatTapHint,
       toggleSeatPicker:e => { e.preventDefault(); if (!s.sending) this.setState({seatPickerOpen:!s.seatPickerOpen}, () => this.persistDraft()); },
-      chooseAnySeat: () => this.setState({seatMode:'any',seats:[],seatConflict:false,seatPickerOpen:false}, () => this.loadSeats()),
+      chooseAnySeat: () => this.setState({seats:[],seatConflict:false}),
       chooseManualSeat: () => this.setState({seatMode:'manual',seatPickerOpen:true}, () => this.loadSeats()),
       seatsLoading: s.seatsLoading,
       seatsFailed: s.seatsError,
@@ -1331,7 +1355,9 @@ export class Component extends React.Component {
         ((s.showErrors && !s.consent) ? 'rgba(206,43,55,0.6)' : 'rgba(255,255,255,0.12)') + ';background:rgba(255,255,255,0.03)',
       waChatHref: this.waChatUrl(),
       applicationWhatsApp: 'https://wa.me/' + (s.lang === 'it' ? '393245958718' : WA_NUM) + '?text=' + encodeURIComponent(this.message()),
-      copyApplication: () => { this.copy(this.message()); this.flash(t.ui.copied); },
+      copyApplication: () => { this.copy(this.message()); this.flash(t.ui.copied); this.mirrorLead('viber'); },
+      mirrorWhatsApp: () => this.mirrorLead('wa'),
+      mirrorViber: () => this.mirrorLead('viber'),
       fromAddress: r.f + ' — ' + (r.fm ? '' : r.fp), toAddress: r.t + ' — ' + (r.tm ? '' : r.tp),
       fromMap: r.fm, toMap: r.tm,
       modalOpen: s.modalOpen && !!s.sentId,
