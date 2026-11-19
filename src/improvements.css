@@ -11,7 +11,7 @@
 .help-links a:first-child { color:#4BE58C; background:rgba(37,211,102,.12); }
 .cabin-windows { display:flex; justify-content:space-between; color:#A9C0DA; font-size:13px; padding:0 4px 8px; }
 .cabin-rear { text-align:center; color:#A9C0DA; font-size:13px; margin-top:12px; }
-[data-v="seat"][data-status="taken"], [data-v="seat"][data-status="blocked"], [data-v="seat"][data-status="locked"] { text-decoration:line-through; }
+[data-v="seat"][data-status="taken"], [data-v="seat"][data-status="blocked"] { text-decoration:line-through; }
 [data-v="seat"][aria-pressed="true"] { text-decoration:none; }
 [hidden] { display:none !important; }
 .date-strip { scrollbar-width:thin; scrollbar-color:#F2B01E #102C4E; }
@@ -21,8 +21,10 @@
 .skip-link:focus { top:12px; }
 [data-v="mbar"][data-active="false"] { display:none !important; }
 header a[hreflang] { display:inline-flex; align-items:center; justify-content:center; }
-[data-v="seat"]:disabled { text-decoration:line-through; }
-[data-v="seat"][data-status="locked"] { opacity:.65; }
+[data-v="seat"]:disabled:not([data-status="locked"]):not([aria-pressed="true"]) { text-decoration:line-through; }
+[data-v="seat"][data-status="locked"] { opacity:.65; text-decoration:none; animation:seat-wait 1.2s ease-in-out infinite alternate; }
+@keyframes seat-wait { from { opacity:.45; } to { opacity:.75; } }
+@media (prefers-reduced-motion:reduce) { [data-v="seat"][data-status="locked"] { animation:none; } }
 label > span, .faq-help p { overflow-wrap:break-word; }
 .field-error { font-size:13px; color:#F0A6A6; line-height:1.5; }
 .seat-options { display:grid; gap:8px; margin-top:16px; }

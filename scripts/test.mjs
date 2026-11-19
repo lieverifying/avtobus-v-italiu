@@ -287,6 +287,9 @@ async function testP0(browser,base,pass) {
   await selects.nth(2).selectOption({index:2});
   await page.waitForTimeout(100);
   assert.equal(gets,3);
+  const loading=await page.locator('[data-v=seat]').first().evaluate(el=>({deco:getComputedStyle(el).textDecorationLine,bg:getComputedStyle(el).backgroundColor,status:el.dataset.status}));
+  assert.deepEqual([loading.status,loading.deco],['locked','none'],JSON.stringify(loading));
+  assert(!loading.bg.startsWith('rgba(206, 43, 55'),'loading seats must not look taken: '+loading.bg);
   await page.clock.fastForward(10001);
   await page.getByText(T.ua.ui.seatsUnavailable,{exact:true}).waitFor();
   await page.locator('#v3pax input[type=text]').nth(0).fill('Тест');

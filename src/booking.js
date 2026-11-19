@@ -1138,6 +1138,9 @@ export class Component extends React.Component {
         const status = on ? t.seat.picked : st === 'free' ? t.seat.free : st === 'blocked' ? t.seat.blocked : st === 'locked' ? t.ui.unavailable : t.seat.taken;
         const skin = on
           ? 'background:' + acc + ';color:#08182F;border:1px solid ' + acc + ';transform:scale(1.05);cursor:pointer'
+          : st === 'locked'
+            // наявність ще завантажується (або недоступна): нейтральний сірий, а не «зайнято»
+            ? 'background:rgba(255,255,255,0.04);color:#6F8AA8;border:1px solid rgba(255,255,255,0.12);cursor:wait'
           : st === 'blocked'
             ? 'background:rgba(255,255,255,0.04);color:#92A8C3;border:1px dashed rgba(255,255,255,0.3);text-decoration:line-through;cursor:not-allowed'
             : off

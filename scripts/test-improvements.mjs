@@ -161,9 +161,11 @@ export async function testImprovements(browser, base, pass) {
     assert.equal(await page.locator('[data-v=seat][data-status=taken]').filter({hasText:/^2$/}).count(),1);
     assert.equal(await page.locator('[data-v=mbar] a').count(),0);
     assert.equal(await page.locator('[data-v=mbar] button').count(),1);
-    // Seat map is open by default (owner's request), so on phones the form starts after ~13 seat rows.
-    if (width<600) { assert(metrics.bar<=70,JSON.stringify(metrics));assert(metrics.formY<2900,JSON.stringify(metrics)); }
-    if (width===390) assert(metrics.formY<2700,JSON.stringify(metrics));
+    // Passenger data comes first; the open seat map sits below it, above the ticket.
+    if (width<600) { assert(metrics.bar<=70,JSON.stringify(metrics));assert(metrics.formY<1750,JSON.stringify(metrics)); }
+    if (width===390) assert(metrics.formY<1500,JSON.stringify(metrics));
+    const order=await page.evaluate(()=>{const y=s=>document.querySelector(s).getBoundingClientRect().top;return [y('#v3pax'),y('[data-v=seat-card]'),y('#booking-consent')];});
+    assert(order[0]<order[1] && order[2]<order[1], 'passengers, then seats: '+order);
     if (process.env.PRINT_METRICS) console.log('metrics', width, JSON.stringify(metrics));
     assert.equal(metrics.columns,width===1280?3:width===768?2:1);
     await page.locator('.trip-details > summary').click();
